@@ -49,12 +49,13 @@ def get_access_token(consumer_key, request_token):
         raise poku.exceptions.PocketGetAccessTokenException(exception_msg)
 
 
-def get_items(consumer_key, access_token):
+def get_items(consumer_key, access_token, **kwargs):
     """ get a list pocket items from api """
     data = {
         'consumer_key': consumer_key,
         'access_token': access_token,
-        'detailType': 'complete'
+        'detailType': 'complete',
+        **kwargs
     }
     r = requests.post('https://getpocket.com/v3/get', data=data)
 

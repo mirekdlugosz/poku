@@ -23,6 +23,14 @@ def parse_args(args):
                help='pocket access key')
     parser.add('--tag',
                help='tag to add to imported items')
+    parser.add('--state',
+               help='Only add items in state. One of "unread" (default), "archive" or "all"')
+    parser.add('--pocket-tag',
+               help='Only add items tagged with this tag')
+    parser.add('--since',
+               help='Only add items modified since (unix timestamp)')
+    parser.add('--exclude-tags',
+               help='List of tags that should not be carried over during import')
     args = parser.parse_args(args)
 
     return args
@@ -47,10 +55,21 @@ def main():
         access_token = args.access
 
     # retrieve pocket items, ensure unique urls and sort
-    pocket_items = [poku.pocket.item_to_dict(i)
-                    for i in poku.pocket.get_items(consumer_key, access_token)]
+    new_kwargs = {}
+    if args.state:
+        new_kwargs['state'] = args.state
+    if args.pocket_tag:
+        new_kwargs['tag'] = args.pocket_tag
+    if args.since:
+        new_kwargs['since'] = args.since
+
+    pocket_items = poku.pocket.get_items(
+        consumer_key, access_token, **new_kwargs
+    )
+    pocket_items = [poku.pocket.item_to_dict(i) for i in pocket_items]
     pocket_items = poku.utils.dict_list_ensure_unique(pocket_items)
     pocket_items = poku.utils.sort_dict_items(pocket_items)
+    pocket_items = poku.utils.remove_tags(pocket_items, args.exclude_tags)
 
     # retrieve buku items and sort
     bukudb = buku.BukuDb()
